@@ -1,0 +1,115 @@
+*
+    margin: 0
+    padding: 0
+    box-sizing: border-box
+
+.App
+    width: 100vw
+    height: 100vh
+
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    background: #222222
+    color: #eee
+    gap: 2rem
+    padding: 2rem
+
+    font-family: 'Roboto', sans-serif
+
+    .Search
+        display: flex
+        align-items: center
+        justify-content: center
+
+        gap: 0.5rem
+
+        .Input
+            width: 100%
+            max-width: 400px
+            padding: 10px
+            border: none
+            border-radius: 5px
+            font-size: 1.2rem
+            height: 4rem
+
+            outline: none
+
+            background: #333333
+            color: #eee
+
+            transition: all 0.3s ease
+
+            &:focus
+                box-shadow: 0 0 10px #fff
+
+        .Button
+            height: 4rem
+            width: 10rem
+            border: none
+            border-radius: 5px
+            font-size: 1.2rem
+            background: #333333
+            color: #eee
+
+            cursor: pointer
+
+            transition: all 0.3s ease
+
+            &:hover
+                background: #444444
+
+    .Results
+        max-height: 100vh
+        width: 80vw
+        overflow: auto
+        display: grid
+        grid-template-columns: repeat(3, 1fr)
+        grid-auto-rows: 1fr
+
+        // Set scrolbar color to match the theme
+        scrollbar-color: #333333 #222222
+
+        .Result
+            position: relative
+            display: flex
+            flex-direction: column
+            justify-content: center
+            align-items: center
+            text-align: center
+            margin: 1rem
+            transition: all 0.3s ease
+            color: #eee
+
+            .Title
+                display: none
+                transition: all 0.3s ease
+                font-size: 1rem
+
+            .Poster
+                width: auto
+                height: auto
+                border-radius: 5px
+
+                transition: all 0.3s ease
+
+                &:hover
+                    background: #000
+                    opacity: 0.2
+
+                    // Scael the image
+                    transform: scale(1.1)
+
+                    + .Title
+                        display: block
+
+                        position: absolute
+                        transition: all 0.3s ease
+
+                        top: 50%
+                        left: 50%
+                        transform: translate(-50%, -50%)
+
+                        // make if hovered on text not react
+                        pointer-events: none
