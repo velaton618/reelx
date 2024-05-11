@@ -1,10 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import puppeteer from 'puppeteer';
+import puppeteer, { Browser } from 'puppeteer';
+import { delay } from 'rxjs';
 
 @Injectable()
 export class AppService {
+  browser: Browser;
+
+  constructor() {
+    this.init();
+  }
+
+  async init() {
+    this.browser = await puppeteer.launch({
+      headless: false,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  }
+
   async saerch(q: string): Promise<string[]> {
     const res = await axios.get(
       `https://rezka.ag/search/?do=search&subaction=search&q=${q}`,
@@ -38,37 +52,58 @@ export class AppService {
     return links;
   }
 
-  async getFilm(url: string): Promise<{ url: string; title: string }> {
-    const browser = await puppeteer.launch();
-
-    const page = await browser.newPage();
+  async getFilm(
+    url: string,
+  ): Promise<{ url: string; title: string; qualities: string[] }> {
+    const page = await this.browser.newPage();
     await page.tracing.start({
       categories: ['devtools.timeline'],
       path: './tracing.json',
     });
-    await page.setRequestInterception(true);
+    // await page.setRequestInterception(true);
 
-    page.on('request', (req) => {
-      if (
-        req.resourceType() == 'stylesheet' ||
-        req.resourceType() == 'font' ||
-        req.resourceType() == 'image'
-      ) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
+    // page.on('request', (req) => {
+    //   if (
+    //     req.resourceType() == 'stylesheet' ||
+    //     req.resourceType() == 'font' ||
+    //     req.resourceType() == 'image'
+    //   ) {
+    //     req.abort();
+    //   } else {
+    //     req.continue();
+    //   }
+    // });
 
     await page.setViewport({ width: 1920, height: 1080 });
 
-    await page.goto(url);
-    await page.waitForSelector('iframe');
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-    const iframe = await page.$('iframe');
-    iframe.click();
+    // const iframe = await page.$('iframe');
+    // iframe.click();
 
-    const title = await page.title();
+    page.waitForSelector(
+      '#oframecdnplayer > pjsdiv:nth-child(17) > pjsdiv:nth-child(3)',
+    );
+    page.click('#oframecdnplayer > pjsdiv:nth-child(17) > pjsdiv:nth-child(3)');
+
+    await delay(1000);
+
+    // Scroll to the iframe element
+    await page.evaluate(() => {
+      const iframe = document.querySelector(
+        '#cdnplayer_settings > pjsdiv > pjsdiv:nth-child(1) > pjsdiv:nth-child(4)',
+      ) as HTMLElement;
+      iframe.click();
+    });
+
+    const html = await page.content();
+    const $ = cheerio.load(html);
+    const title = $('h1').text();
+    // const qualities = $('#cdnplayer_settings > pjsdiv > pjsdiv');
+    // qualities.each((i, el) => {
+    //   console.log($(el).text());
+    // });
+    // Click on .b-post__info_rates.kp a and get the redirected link
 
     const trace = JSON.parse((await page.tracing.stop()).toString());
     const events = trace.traceEvents;
@@ -78,16 +113,21 @@ export class AppService {
         const url = events[i].args.data.url;
 
         if (url.includes('mp4')) {
+          // page.close();
           return {
             url: url,
             title: title,
+            qualities: [],
           };
         }
       }
     }
+
+    // page.close();
     return {
       url: '',
       title: '',
+      qualities: [],
     };
   }
 }

@@ -11,7 +11,9 @@ export class AppController {
   }
 
   @Get('/film')
-  async getFilm(@Query('url') url): Promise<{ url: string; title: string }> {
+  async getFilm(
+    @Query('url') url,
+  ): Promise<{ url: string; title: string; qualities: string[] }> {
     return await this.appService.getFilm(url);
   }
 }
